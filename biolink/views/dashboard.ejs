@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Mon profil</title>
 <link rel="stylesheet" href="/static/css/app.css" />
+<style>
+#musicResults{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.music-row{display:flex;align-items:center;gap:10px;padding:7px 9px;border-radius:11px;
+  background:rgba(255,255,255,.04);border:1px solid var(--border)}
+.music-row img{width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#222}
+.music-row span{flex:1;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.music-row .mini{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);
+  background:rgba(255,255,255,.06);color:var(--text);cursor:pointer;flex-shrink:0}
+.music-row .mini:hover{background:var(--accent)}
+</style>
 </head>
 <body>
 <div class="container dash">
@@ -71,22 +81,32 @@
     </div>
 
     <div class="section">
-      <h3>Fond & Musique</h3>
-      <p class="hint">Fond : image ou vidéo (mp4/webm). Audio : mp3/ogg/wav. 25 Mo max par fichier.</p>
-      <div class="row2">
-        <div>
-          <label>Fond (image ou vidéo)</label>
-          <input type="file" name="background" accept="image/*,video/mp4,video/webm" />
-          <% if (u.background) { %><div class="current">Actuel : <a href="<%= u.background %>" target="_blank">voir</a></div><% } %>
-        </div>
-        <div>
-          <label>Musique de fond (audio)</label>
-          <input type="file" name="song" accept="audio/*" />
-          <% if (u.song) { %><div class="current">Actuelle : <a href="<%= u.song %>" target="_blank">voir</a></div><% } %>
-        </div>
+      <h3>Fond</h3>
+      <p class="hint">Image ou vidéo (mp4/webm). 25 Mo max.</p>
+      <label>Fond (image ou vidéo)</label>
+      <input type="file" name="background" accept="image/*,video/mp4,video/webm" />
+      <% if (u.background) { %><div class="current">Actuel : <a href="<%= u.background %>" target="_blank">voir</a></div><% } %>
+    </div>
+
+    <div class="section">
+      <h3>Musique de fond</h3>
+      <p class="hint">Cherche une musique (aperçu ~30 s) OU envoie ton propre fichier audio complet.</p>
+
+      <label>🔎 Rechercher une musique</label>
+      <input type="text" id="musicSearch" placeholder="Titre ou artiste (ex: Drake)" autocomplete="off" />
+      <div id="musicResults"></div>
+
+      <div id="selectedSong" class="current" style="margin-top:8px">
+        <% if (u.song) { %>🎵 Sélection actuelle : <b><%= u.song_name || u.song %></b><% } %>
       </div>
-      <label>Nom de la musique (affiché dans le lecteur)</label>
-      <input type="text" name="song_name" value="<%= u.song_name %>" maxlength="80" placeholder="Artiste - Titre" />
+      <input type="hidden" name="song_url" id="song_url" value="<%= /^https?:/.test(u.song) ? u.song : '' %>" />
+      <input type="hidden" name="song_art" id="song_art" value="<%= u.song_art || '' %>" />
+
+      <label style="margin-top:14px">Ou envoyer un fichier audio (musique complète)</label>
+      <input type="file" name="song" accept="audio/*" />
+
+      <label>Nom affiché dans le lecteur</label>
+      <input type="text" name="song_name" id="song_name" value="<%= u.song_name %>" maxlength="80" placeholder="Artiste - Titre" />
     </div>
 
     <div class="section">
@@ -147,6 +167,58 @@ function addButton(){
     '<button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">✕</button>';
   document.getElementById('buttons').appendChild(row);
 }
+
+// ---- Recherche de musique (API iTunes via notre serveur) ----
+const musicSearch = document.getElementById('musicSearch');
+const musicResults = document.getElementById('musicResults');
+let mt, preview = null;
+if (musicSearch) musicSearch.addEventListener('input', () => {
+  clearTimeout(mt);
+  const q = musicSearch.value.trim();
+  if (q.length < 2) { musicResults.innerHTML = ''; return; }
+  mt = setTimeout(async () => {
+    musicResults.innerHTML = '<div class="current">Recherche…</div>';
+    try {
+      const r = await fetch('/api/music/search?q=' + encodeURIComponent(q));
+      const list = await r.json();
+      musicResults.innerHTML = '';
+      if (!list.length) { musicResults.innerHTML = '<div class="current">Aucun résultat.</div>'; return; }
+      list.forEach(t => {
+        const row = document.createElement('div');
+        row.className = 'music-row';
+
+        const img = document.createElement('img'); img.src = t.art; img.alt = '';
+        const span = document.createElement('span'); span.textContent = t.name; // textContent => sans danger
+
+        const playBtn = document.createElement('button');
+        playBtn.type = 'button'; playBtn.className = 'mini'; playBtn.textContent = '▶';
+        playBtn.title = 'Écouter un extrait';
+        playBtn.addEventListener('click', () => {
+          if (preview) { preview.pause(); }
+          preview = new Audio(t.url); preview.volume = 0.6; preview.play().catch(()=>{});
+        });
+
+        const pick = document.createElement('button');
+        pick.type = 'button'; pick.className = 'btn'; pick.style.padding = '7px 12px'; pick.textContent = 'Choisir';
+        pick.addEventListener('click', () => {
+          document.getElementById('song_url').value = t.url;
+          document.getElementById('song_art').value = t.art;
+          document.getElementById('song_name').value = t.name;
+          const sel = document.getElementById('selectedSong');
+          sel.textContent = '🎵 Sélection : '; const b = document.createElement('b'); b.textContent = t.name; sel.appendChild(b);
+          if (preview) preview.pause();
+          musicResults.innerHTML = '';
+          musicSearch.value = '';
+        });
+
+        row.appendChild(img); row.appendChild(span); row.appendChild(playBtn); row.appendChild(pick);
+        musicResults.appendChild(row);
+      });
+    } catch (e) {
+      musicResults.innerHTML = '<div class="current">Erreur de recherche, réessaie.</div>';
+    }
+  }, 350);
+});
 </script>
 </body>
 </html>
