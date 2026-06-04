@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mon profil</title>
+<link rel="stylesheet" href="/static/css/app.css" />
+<style>
+#musicResults{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.music-row{display:flex;align-items:center;gap:10px;padding:7px 9px;border-radius:11px;
+  background:rgba(255,255,255,.04);border:1px solid var(--border)}
+.music-row img{width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#222}
+.music-row span{flex:1;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.music-row .mini{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);
+  background:rgba(255,255,255,.06);color:var(--text);cursor:pointer;flex-shrink:0}
+.music-row .mini:hover{background:var(--accent)}
+</style>
+</head>
+<body>
+<div class="container dash">
+
+  <div class="dash-head">
+    <div>
+      <h2>Modifier mon profil</h2>
+      <div class="current">Ta page : <a href="/<%= u.username %>" target="_blank" style="color:var(--accent)">ce-site.com/<%= u.username %></a> · <%= u.views %> vues</div>
+    </div>
+    <nav style="display:flex;gap:10px">
+      <a class="btn" href="/<%= u.username %>" target="_blank">👁 Voir ma page</a>
+      <form method="POST" action="/logout"><button class="btn btn-danger" type="submit">Déconnexion</button></form>
+    </nav>
+  </div>
+
+  <% if (saved) { %><div class="ok">✅ Profil enregistré !</div><% } %>
+
+  <form class="panel" method="POST" action="/dashboard" enctype="multipart/form-data">
+
+    <div class="section">
+      <h3>Identité</h3>
+      <p class="hint">Pseudo : <b>@<%= u.username %></b> (non modifiable)</p>
+      <div class="row2">
+        <div>
+          <label>Photo de profil (image)</label>
+          <input type="file" name="avatar" accept="image/*" />
+          <% if (u.avatar) { %><div class="current">Actuelle : <a href="<%= u.avatar %>" target="_blank">voir</a></div><% } %>
+        </div>
+        <div>
+          <label>Statut</label>
+          <select name="status">
+            <% ['online','idle','dnd','offline',''].forEach(function(s){ %>
+              <option value="<%= s %>" <%= u.status===s?'selected':'' %>><%= s||'(aucun)' %></option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
+      <label>Sous-titre / localisation</label>
+      <input type="text" name="title" value="<%= u.title %>" maxlength="80" placeholder="ex: développeur · Paris" />
+      <label>Bio (une ligne = un message qui défile, max 6)</label>
+      <textarea name="bio" placeholder="Bienvenue sur mon profil&#10;merci de ta visite !"><%= bio %></textarea>
+    </div>
+
+    <div class="section">
+      <h3>Apparence</h3>
+      <div class="row2">
+        <div><label>Couleur principale</label><input type="color" name="accent" value="<%= u.accent %>" /></div>
+        <div><label>Couleur secondaire</label><input type="color" name="accent2" value="<%= u.accent2 %>" /></div>
+      </div>
+      <div class="row2">
+        <div>
+          <label>Effet de fond</label>
+          <select name="effect">
+            <% [['snow','Neige'],['rain','Pluie'],['stars','Étoiles'],['none','Aucun']].forEach(function(e){ %>
+              <option value="<%= e[0] %>" <%= u.effect===e[0]?'selected':'' %>><%= e[1] %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:8px;padding-bottom:4px">
+          <input type="checkbox" name="cursor" id="cursor" style="width:auto" <%= u.cursor?'checked':'' %> />
+          <label for="cursor" style="margin:0">Curseur personnalisé</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Fond</h3>
+      <p class="hint">Image ou vidéo (mp4/webm). 25 Mo max.</p>
+      <label>Fond (image ou vidéo)</label>
+      <input type="file" name="background" accept="image/*,video/mp4,video/webm" />
+      <% if (u.background) { %><div class="current">Actuel : <a href="<%= u.background %>" target="_blank">voir</a></div><% } %>
+    </div>
+
+    <div class="section">
+      <h3>Musique de fond</h3>
+      <p class="hint">Cherche une musique (aperçu ~30 s) OU envoie ton propre fichier audio complet.</p>
+
+      <label>🔎 Rechercher une musique</label>
+      <input type="text" id="musicSearch" placeholder="Titre ou artiste (ex: Drake)" autocomplete="off" />
+      <div id="musicResults"></div>
+
+      <div id="selectedSong" class="current" style="margin-top:8px">
+        <% if (u.song) { %>🎵 Sélection actuelle : <b><%= u.song_name || u.song %></b><% } %>
+      </div>
+      <input type="hidden" name="song_url" id="song_url" value="<%= /^https?:/.test(u.song) ? u.song : '' %>" />
+      <input type="hidden" name="song_art" id="song_art" value="<%= u.song_art || '' %>" />
+
+      <label style="margin-top:14px">Ou envoyer un fichier audio (musique complète)</label>
+      <input type="file" name="song" accept="audio/*" />
+
+      <label>Nom affiché dans le lecteur</label>
+      <input type="text" name="song_name" id="song_name" value="<%= u.song_name %>" maxlength="80" placeholder="Artiste - Titre" />
+    </div>
+
+    <div class="section">
+      <h3>Liens sociaux (icônes)</h3>
+      <p class="hint">Types dispo : discord, github, instagram, x, youtube, spotify, tiktok, telegram, email, globe</p>
+      <div id="socials">
+        <% (socials.length?socials:[{type:'',url:''}]).forEach(function(s){ %>
+          <div class="repeat-row">
+            <select name="social_type">
+              <% ['discord','github','instagram','x','youtube','spotify','tiktok','telegram','email','globe'].forEach(function(t){ %>
+                <option value="<%= t %>" <%= s.type===t?'selected':'' %>><%= t %></option>
+              <% }) %>
+            </select>
+            <input type="text" name="social_url" value="<%= s.url %>" placeholder="https://..." />
+            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">✕</button>
+          </div>
+        <% }) %>
+      </div>
+      <button type="button" class="btn btn-add" onclick="addSocial()">+ Ajouter un lien</button>
+    </div>
+
+    <div class="section">
+      <h3>Boutons texte (optionnel)</h3>
+      <div id="buttons">
+        <% buttons.forEach(function(bn){ %>
+          <div class="repeat-row">
+            <input type="text" name="btn_label" value="<%= bn.label %>" placeholder="Libellé" />
+            <input type="text" name="btn_url" value="<%= bn.url %>" placeholder="https://..." />
+            <button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">✕</button>
+          </div>
+        <% }) %>
+      </div>
+      <button type="button" class="btn btn-add" onclick="addButton()">+ Ajouter un bouton</button>
+    </div>
+
+    <div class="bar">
+      <button class="btn btn-primary" type="submit">💾 Enregistrer</button>
+      <a class="btn" href="/<%= u.username %>" target="_blank">Prévisualiser</a>
+    </div>
+  </form>
+</div>
+
+<script>
+const SOCIAL_TYPES = ['discord','github','instagram','x','youtube','spotify','tiktok','telegram','email','globe'];
+function addSocial(){
+  const row = document.createElement('div');
+  row.className = 'repeat-row';
+  const sel = '<select name="social_type">' + SOCIAL_TYPES.map(t=>`<option value="${t}">${t}</option>`).join('') + '</select>';
+  row.innerHTML = sel + '<input type="text" name="social_url" placeholder="https://..." />' +
+    '<button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">✕</button>';
+  document.getElementById('socials').appendChild(row);
+}
+function addButton(){
+  const row = document.createElement('div');
+  row.className = 'repeat-row';
+  row.innerHTML = '<input type="text" name="btn_label" placeholder="Libellé" />' +
+    '<input type="text" name="btn_url" placeholder="https://..." />' +
+    '<button type="button" class="btn btn-danger" onclick="this.parentElement.remove()">✕</button>';
+  document.getElementById('buttons').appendChild(row);
+}
+
+// ---- Recherche de musique (API iTunes via notre serveur) ----
+const musicSearch = document.getElementById('musicSearch');
+const musicResults = document.getElementById('musicResults');
+let mt, preview = null;
+if (musicSearch) musicSearch.addEventListener('input', () => {
+  clearTimeout(mt);
+  const q = musicSearch.value.trim();
+  if (q.length < 2) { musicResults.innerHTML = ''; return; }
+  mt = setTimeout(async () => {
+    musicResults.innerHTML = '<div class="current">Recherche…</div>';
+    try {
+      const r = await fetch('/api/music/search?q=' + encodeURIComponent(q));
+      const list = await r.json();
+      musicResults.innerHTML = '';
+      if (!list.length) { musicResults.innerHTML = '<div class="current">Aucun résultat.</div>'; return; }
+      list.forEach(t => {
+        const row = document.createElement('div');
+        row.className = 'music-row';
+
+        const img = document.createElement('img'); img.src = t.art; img.alt = '';
+        const span = document.createElement('span'); span.textContent = t.name; // textContent => sans danger
+
+        const playBtn = document.createElement('button');
+        playBtn.type = 'button'; playBtn.className = 'mini'; playBtn.textContent = '▶';
+        playBtn.title = 'Écouter un extrait';
+        playBtn.addEventListener('click', () => {
+          if (preview) { preview.pause(); }
+          preview = new Audio(t.url); preview.volume = 0.6; preview.play().catch(()=>{});
+        });
+
+        const pick = document.createElement('button');
+        pick.type = 'button'; pick.className = 'btn'; pick.style.padding = '7px 12px'; pick.textContent = 'Choisir';
+        pick.addEventListener('click', () => {
+          document.getElementById('song_url').value = t.url;
+          document.getElementById('song_art').value = t.art;
+          document.getElementById('song_name').value = t.name;
+          const sel = document.getElementById('selectedSong');
+          sel.textContent = '🎵 Sélection : '; const b = document.createElement('b'); b.textContent = t.name; sel.appendChild(b);
+          if (preview) preview.pause();
+          musicResults.innerHTML = '';
+          musicSearch.value = '';
+        });
+
+        row.appendChild(img); row.appendChild(span); row.appendChild(playBtn); row.appendChild(pick);
+        musicResults.appendChild(row);
+      });
+    } catch (e) {
+      musicResults.innerHTML = '<div class="current">Erreur de recherche, réessaie.</div>';
+    }
+  }, 350);
+});
+</script>
+</body>
+</html>
