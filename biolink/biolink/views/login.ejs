@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Connexion</title>
+<link rel="stylesheet" href="/static/css/app.css" />
+</head>
+<body>
+<div class="container"><header><a href="/" class="logo">bio.link</a></header></div>
+<div class="auth-wrap">
+  <form class="auth panel" method="POST" action="/login">
+    <h2>Connexion</h2>
+    <p class="sub">Content de te revoir.</p>
+    <% if (error) { %><div class="error"><%= error %></div><% } %>
+
+    <label>Pseudo</label>
+    <input type="text" name="username" value="<%= username %>" placeholder="tonpseudo" autocomplete="username" required autofocus />
+
+    <label>Mot de passe</label>
+    <input type="password" name="password" autocomplete="current-password" required />
+
+    <button class="btn btn-primary full" type="submit">Se connecter</button>
+    <p class="muted">Pas encore de compte ? <a href="/register" style="color:var(--accent)">S'inscrire</a></p>
+  </form>
+</div>
+</body>
+</html>
