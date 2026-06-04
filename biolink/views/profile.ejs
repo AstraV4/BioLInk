@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title><%= cfg.username %></title>
+<meta name="description" content="<%= cfg.title || ('Profil de ' + cfg.username) %>" />
+<meta property="og:title" content="<%= cfg.username %>" />
+<meta property="og:description" content="<%= cfg.title || ('Profil de ' + cfg.username) %>" />
+<% if (cfg.avatar) { %><meta property="og:image" content="<%= cfg.avatar %>" /><% } %>
+<meta name="theme-color" content="<%= cfg.accent %>" />
+<link rel="stylesheet" href="/static/css/profile.css" />
+</head>
+<body>
+<div id="bg"></div>
+<video id="bg-video" muted loop playsinline style="display:none"></video>
+<div id="bg-overlay"></div>
+<canvas id="fx"></canvas>
+<div id="cursor"></div>
+
+<div id="enter">
+  <h1 id="enter-title">click to enter</h1>
+  <p>tap anywhere</p>
+</div>
+
+<div id="stage">
+  <div class="card" id="card">
+    <div class="avatar-wrap">
+      <img class="avatar" id="avatar" alt="avatar" />
+      <span class="status" id="status"></span>
+    </div>
+    <div class="username"><span id="uname-text"></span><span class="badges" id="badges"></span></div>
+    <div class="title" id="title"></div>
+    <div class="bio"><span id="bio-text"></span><span class="cursor-blink">&nbsp;</span></div>
+    <div class="views" id="views-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+      <span id="views">0</span>
+    </div>
+    <div class="links" id="links"></div>
+    <div class="btn-links" id="btn-links"></div>
+  </div>
+</div>
+
+<div id="player">
+  <button class="pp" id="pp" aria-label="play/pause">
+    <svg id="pp-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+  </button>
+  <div class="track">
+    <div class="name" id="song-name">—</div>
+    <div class="progress" id="progress"><div class="bar" id="bar"></div></div>
+  </div>
+  <div class="vol">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3z"/></svg>
+    <input type="range" id="vol" min="0" max="1" step="0.01" value="0.4" />
+  </div>
+</div>
+
+<audio id="audio" loop></audio>
+
+<!-- Config injectee de maniere sure (echappee cote serveur) -->
+<script type="application/json" id="cfg"><%- cfgJson %></script>
+<script src="/static/js/profile.js"></script>
+</body>
+</html>

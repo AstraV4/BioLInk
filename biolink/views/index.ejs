@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Crée ton profil — bio link</title>
+<link rel="stylesheet" href="/static/css/app.css" />
+</head>
+<body>
+<div class="container">
+  <header>
+    <a href="/" class="logo">bio.link</a>
+    <nav>
+      <% if (me) { %>
+        <a class="btn" href="/dashboard">Mon profil</a>
+        <a class="btn btn-ghost" href="/<%= me.username %>">Voir ma page</a>
+      <% } else { %>
+        <a class="btn btn-ghost" href="/login">Connexion</a>
+        <a class="btn btn-primary" href="/register">S'inscrire</a>
+      <% } %>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <h1>Ta page, <span>ton style.</span></h1>
+    <p>Crée ton profil personnalisé en quelques secondes : avatar, musique de fond,
+       effets, liens. Partage un seul lien : <b>ce-site.com/tonpseudo</b></p>
+    <div class="cta">
+      <% if (me) { %>
+        <a class="btn btn-primary" href="/dashboard">Modifier mon profil</a>
+      <% } else { %>
+        <a class="btn btn-primary" href="/register">Créer mon profil — gratuit</a>
+        <a class="btn" href="/login">J'ai déjà un compte</a>
+      <% } %>
+    </div>
+    <p class="stat"><%= count %> profil<%= count > 1 ? 's' : '' %> créé<%= count > 1 ? 's' : '' %> 🔥</p>
+  </section>
+
+  <% if (recent.length) { %>
+    <h3 style="margin-bottom:6px">Derniers profils</h3>
+    <div class="grid">
+      <% recent.forEach(function(r){ %>
+        <a class="ucard" href="/<%= r.username %>">
+          <% if (r.avatar) { %><img src="<%= r.avatar %>" alt="" /><% } else { %><div class="ph"></div><% } %>
+          <b>@<%= r.username %></b>
+          <% if (r.title) { %><small><%= r.title %></small><% } %>
+        </a>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
+</body>
+</html>
