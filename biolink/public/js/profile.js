@@ -139,23 +139,32 @@ addEventListener('mouseleave', () => card.style.transform = '');
 })();
 
 // --- Lecteur audio ---
-const audio = $('audio'), pp = $('pp'), ppIcon = $('pp-icon'), bar = $('bar'), prog = $('progress');
+const audio = $('audio');
 const ICON_PLAY = '<path d="M8 5v14l11-7z"/>', ICON_PAUSE = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
-if (CONFIG.song){ audio.src = CONFIG.song; $('song-name').textContent = CONFIG.songName || 'Musique'; }
-else { $('player').remove(); }
-audio.volume = 0.4;
-pp.addEventListener('click', () => {
-  if (audio.paused){ audio.play(); ppIcon.innerHTML = ICON_PAUSE; }
-  else { audio.pause(); ppIcon.innerHTML = ICON_PLAY; }
-});
-audio.addEventListener('timeupdate', () => { if (audio.duration) bar.style.width = (audio.currentTime/audio.duration*100) + '%'; });
-prog.addEventListener('click', e => { const r = prog.getBoundingClientRect(); audio.currentTime = (e.clientX-r.left)/r.width*audio.duration; });
-$('vol').addEventListener('input', e => audio.volume = e.target.value);
+const ppIcon = $('pp-icon');
+if (CONFIG.song){
+  audio.src = CONFIG.song;
+  $('song-name').textContent = CONFIG.songName || 'Musique';
+  audio.volume = 0.4;
+  const pp = $('pp'), bar = $('bar'), prog = $('progress'), vol = $('vol');
+  pp.addEventListener('click', () => {
+    if (audio.paused){ audio.play(); ppIcon.innerHTML = ICON_PAUSE; }
+    else { audio.pause(); ppIcon.innerHTML = ICON_PLAY; }
+  });
+  audio.addEventListener('timeupdate', () => { if (audio.duration) bar.style.width = (audio.currentTime/audio.duration*100) + '%'; });
+  prog.addEventListener('click', e => { const r = prog.getBoundingClientRect(); audio.currentTime = (e.clientX-r.left)/r.width*audio.duration; });
+  vol.addEventListener('input', e => audio.volume = e.target.value);
+} else {
+  const player = $('player'); if (player) player.remove();
+}
 
 // --- Ecran d'entree ---
 $('enter').addEventListener('click', () => {
   $('enter').classList.add('hidden');
   $('stage').classList.add('show');
-  if (CONFIG.song){ $('player').classList.add('show'); audio.play().then(()=>ppIcon.innerHTML=ICON_PAUSE).catch(()=>{}); }
-  const v = $('bg-video'); if (v.style.display !== 'none') v.play().catch(()=>{});
+  if (CONFIG.song){
+    const player = $('player'); if (player) player.classList.add('show');
+    audio.play().then(() => { if (ppIcon) ppIcon.innerHTML = ICON_PAUSE; }).catch(() => {});
+  }
+  const v = $('bg-video'); if (v && v.style.display !== 'none') v.play().catch(() => {});
 }, { once:true });
