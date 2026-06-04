@@ -42,4 +42,10 @@ CREATE TABLE IF NOT EXISTS users (
 );
 `);
 
+// Migrations (ajout de colonnes sur une base deja existante, sans rien casser)
+const cols = db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
+if (!cols.includes('song_art')) {
+  db.exec("ALTER TABLE users ADD COLUMN song_art TEXT DEFAULT ''");
+}
+
 module.exports = db;
