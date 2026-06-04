@@ -83,7 +83,7 @@ const RESERVED = new Set([
 ]);
 
 function validUsername(u) {
-  return typeof u === 'string' && /^[a-zA-Z0-9_]{3,20}$/.test(u) && !RESERVED.has(u.toLowerCase());
+  return typeof u === 'string' && /^[a-zA-Z0-9_]{1,20}$/.test(u) && !RESERVED.has(u.toLowerCase());
 }
 function safeHex(c, fallback) {
   return (typeof c === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(c)) ? c : fallback;
