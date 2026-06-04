@@ -146,7 +146,13 @@ if (CONFIG.song){
   audio.src = CONFIG.song;
   $('song-name').textContent = CONFIG.songName || 'Musique';
   audio.volume = 0.4;
-  const pp = $('pp'), bar = $('bar'), prog = $('progress'), vol = $('vol');
+  const player = $('player'), pp = $('pp'), bar = $('bar'), prog = $('progress'), vol = $('vol');
+  if (CONFIG.songArt && player){
+    const art = document.createElement('img');
+    art.src = CONFIG.songArt; art.alt = '';
+    art.style.cssText = 'width:38px;height:38px;border-radius:8px;object-fit:cover;flex-shrink:0';
+    player.insertBefore(art, player.firstChild);
+  }
   pp.addEventListener('click', () => {
     if (audio.paused){ audio.play(); ppIcon.innerHTML = ICON_PAUSE; }
     else { audio.pause(); ppIcon.innerHTML = ICON_PLAY; }
