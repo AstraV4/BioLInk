@@ -1,176 +1,299 @@
 // ===========================================================================
-//  Moteur de la page profil. Lit la config JSON injectee par le serveur.
-//  Securite : les donnees utilisateur sont posees via textContent / attributs
-//  valides, jamais via innerHTML. Seules les icones (constantes) sont en HTML.
+//  PLATEFORME BIO-LINK MULTI-UTILISATEURS  (style guns.lol, auto-hebergeable)
+//  Lancer :  npm install  puis  npm start
 // ===========================================================================
-const CONFIG = JSON.parse(document.getElementById('cfg').textContent);
-const $ = id => document.getElementById(id);
- 
-// --- Icones (constantes de confiance) ---
-const ICONS = {
-  discord:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.3 4.4A19 19 0 0 0 15.6 3l-.2.4a14 14 0 0 1 4.1 2 14 14 0 0 0-12 0 14 14 0 0 1 4.2-2L11.4 3A19 19 0 0 0 6.7 4.4 19.7 19.7 0 0 0 3.3 18a19 19 0 0 0 5.8 2.9l.7-1.1a12 12 0 0 1-1.9-.9l.5-.4a13.6 13.6 0 0 0 11.6 0l.5.4a12 12 0 0 1-1.9.9l.7 1.1A19 19 0 0 0 26 18l-.3-.5A19.7 19.7 0 0 0 20.3 4.4ZM9.7 15.1c-.9 0-1.7-.9-1.7-1.9s.8-1.9 1.7-1.9 1.7.9 1.7 1.9-.8 1.9-1.7 1.9Zm4.6 0c-.9 0-1.7-.9-1.7-1.9s.8-1.9 1.7-1.9 1.7.9 1.7 1.9-.8 1.9-1.7 1.9Z"/></svg>',
-  github:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2A10 10 0 0 0 8.8 21.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.3-3.4-1.3-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.3-2.2-.3-4.6-1.1-4.6-5a3.9 3.9 0 0 1 1-2.7 3.6 3.6 0 0 1 .1-2.7s.8-.3 2.7 1a9.3 9.3 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1a3.6 3.6 0 0 1 .1 2.7 3.9 3.9 0 0 1 1 2.7c0 3.9-2.3 4.7-4.6 5 .4.3.7.9.7 1.8v2.6c0 .3.2.6.7.5A10 10 0 0 0 12 2Z"/></svg>',
-  instagram:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>',
-  x:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.2 2h3.3l-7.2 8.2L23 22h-6.6l-5.2-6.8L5.3 22H2l7.7-8.8L1.6 2h6.8l4.7 6.2L18.2 2Zm-1.2 18h1.8L7.1 3.9H5.2L17 20Z"/></svg>',
-  youtube:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M23 7.5a3 3 0 0 0-2.1-2.1C19 4.9 12 4.9 12 4.9s-7 0-8.9.5A3 3 0 0 0 1 7.5 31 31 0 0 0 .6 12 31 31 0 0 0 1 16.5a3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1 31 31 0 0 0 .4-4.5 31 31 0 0 0-.4-4.5ZM9.8 15.3V8.7l5.7 3.3-5.7 3.3Z"/></svg>',
-  spotify:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm4.6 14.4a.6.6 0 0 1-.9.2c-2.4-1.5-5.4-1.8-9-1a.6.6 0 1 1-.3-1.2c3.9-.9 7.3-.5 10 1.1a.6.6 0 0 1 .2.9Zm1.2-2.7a.8.8 0 0 1-1 .3c-2.7-1.7-6.9-2.2-10.1-1.2a.8.8 0 1 1-.4-1.5c3.7-1.1 8.3-.6 11.4 1.4a.8.8 0 0 1 .1 1Zm.1-2.8C14.7 9 8.9 8.8 5.7 9.8a.9.9 0 1 1-.6-1.8c3.8-1.1 10.1-.9 14 1.4a.9.9 0 1 1-1 1.6Z"/></svg>',
-  tiktok:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 2c.3 2.2 1.6 3.6 3.7 3.8v2.5c-1.3.1-2.5-.3-3.7-1v6.4c0 3.4-2.1 5.8-5.4 5.8-3 0-5.1-2.3-5.1-5.2 0-3.1 2.4-5.2 5.6-4.9v2.7c-.5-.1-1-.2-1.5-.1-1.3.2-2 1-1.9 2.4.1 1.3 1 2 2.2 1.9 1.3-.1 2-1 2-2.6V2h3.6Z"/></svg>',
-  telegram:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.3 18.5 20c-.2 1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-4.9 9-8.1c.4-.4-.1-.6-.6-.2L6 13.4l-4.7-1.5c-1-.3-1-1 .2-1.5L20.6 3c.9-.3 1.6.2 1.3 1.3Z"/></svg>',
-  email:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
-  globe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z"/></svg>'
+const express = require('express');
+const session = require('express-session');
+const SQLiteStore = require('connect-sqlite3')(session);
+const bcrypt = require('bcryptjs');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const crypto = require('crypto');
+const db = require('./db');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// --- Dossiers ---
+// DATA_DIR = dossier persistant (en local : le projet ; sur Railway : /data via un volume)
+const DATA_DIR = process.env.DATA_DIR || __dirname;
+const UPLOAD_DIR = path.join(DATA_DIR, 'uploads');
+if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+
+// --- Vues / statique ---
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+app.use(express.urlencoded({ extended: true }));
+app.use('/static', express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '7d' }));
+
+// --- Sessions (stockees en SQLite, persistantes apres redemarrage) ---
+app.use(session({
+  store: new SQLiteStore({ db: 'sessions.db', dir: DATA_DIR }),
+  secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'),
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 1000 * 60 * 60 * 24 * 30, sameSite: 'lax' } // 30 jours
+}));
+
+// Rend l'utilisateur courant dispo dans toutes les vues
+app.use((req, res, next) => {
+  res.locals.me = req.session.userId
+    ? db.prepare('SELECT id, username FROM users WHERE id = ?').get(req.session.userId)
+    : null;
+  next();
+});
+
+// ===========================================================================
+//  UPLOADS (multer)
+// ===========================================================================
+const storage = multer.diskStorage({
+  destination: UPLOAD_DIR,
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase().slice(0, 8);
+    cb(null, crypto.randomBytes(16).toString('hex') + ext);
+  }
+});
+const ALLOWED = {
+  avatar:     ['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
+  background: ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'],
+  song:       ['audio/mpeg', 'audio/mp3', 'audio/ogg', 'audio/wav', 'audio/x-m4a', 'audio/mp4']
 };
-const STATUS_COLORS = { online:'#22c55e', idle:'#f59e0b', dnd:'#ef4444', offline:'#6b7280' };
- 
-// --- Theme ---
-const root = document.documentElement.style;
-root.setProperty('--accent', CONFIG.accent || '#8b5cf6');
-root.setProperty('--accent-2', CONFIG.accent2 || '#22d3ee');
- 
-// --- Fond ---
-if (CONFIG.bgIsVideo && CONFIG.background){
-  const v = $('bg-video'); v.src = CONFIG.background; v.style.display = 'block'; $('bg').style.display = 'none';
-} else if (CONFIG.background){
-  $('bg').style.backgroundImage = "url(" + JSON.stringify(CONFIG.background) + ")";
+const upload = multer({
+  storage,
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25 Mo max par fichier
+  fileFilter: (req, file, cb) => {
+    const list = ALLOWED[file.fieldname] || [];
+    cb(null, list.includes(file.mimetype));
+  }
+}).fields([
+  { name: 'avatar', maxCount: 1 },
+  { name: 'background', maxCount: 1 },
+  { name: 'song', maxCount: 1 }
+]);
+
+// ===========================================================================
+//  HELPERS / VALIDATION
+// ===========================================================================
+const RESERVED = new Set([
+  'login', 'register', 'logout', 'dashboard', 'static', 'uploads', 'api',
+  'admin', 'about', 'terms', 'privacy', 'settings', 'account', 'home',
+  'explore', 'discover', 'index', 'favicon.ico', 'robots.txt'
+]);
+
+function validUsername(u) {
+  return typeof u === 'string' && /^[a-zA-Z0-9_]{3,20}$/.test(u) && !RESERVED.has(u.toLowerCase());
 }
- 
-// --- Identite (textContent => sans danger) ---
-$('uname-text').textContent = CONFIG.username || '';
-$('title').textContent = CONFIG.title || '';
-if (CONFIG.avatar) $('avatar').src = CONFIG.avatar;
-$('views').textContent = (CONFIG.views || 0).toLocaleString('fr-FR');
- 
-if (CONFIG.status && STATUS_COLORS[CONFIG.status]){
-  $('status').style.background = STATUS_COLORS[CONFIG.status];
-  $('status').style.boxShadow = '0 0 12px ' + STATUS_COLORS[CONFIG.status];
-} else { $('status').style.display = 'none'; }
- 
-// --- Liens sociaux ---
-const linksBox = $('links');
-(CONFIG.socials || []).forEach(s => {
-  const a = document.createElement('a');
-  a.className = 'link';
-  let href = s.url || '';
-  if (s.type === 'email' && !/^mailto:/i.test(href)) href = 'mailto:' + href;
-  if (!/^(https?:|mailto:)/i.test(href)) return; // securite : schemas autorises seulement
-  a.href = href; a.target = '_blank'; a.rel = 'noopener'; a.title = s.type || '';
-  a.innerHTML = ICONS[s.type] || ICONS.globe; // icone = constante de confiance
-  linksBox.appendChild(a);
-});
- 
-// --- Boutons texte ---
-const btnBox = $('btn-links');
-(CONFIG.buttons || []).forEach(b => {
-  if (!/^(https?:|mailto:)/i.test(b.url || '')) return;
-  const a = document.createElement('a');
-  a.className = 'btn-link'; a.href = b.url; a.target = '_blank'; a.rel = 'noopener';
-  a.textContent = b.label || 'Lien'; // textContent => sans danger
-  btnBox.appendChild(a);
-});
- 
-// --- Curseur personnalise ---
-if (CONFIG.cursor){
-  root.setProperty('--cursor', 'none');
-  const c = $('cursor'); c.style.display = 'block';
-  addEventListener('mousemove', e => { c.style.left = e.clientX + 'px'; c.style.top = e.clientY + 'px'; });
-  addEventListener('mousedown', () => { c.style.width='38px'; c.style.height='38px'; c.style.background='rgba(139,92,246,.3)'; });
-  addEventListener('mouseup',   () => { c.style.width='26px'; c.style.height='26px'; c.style.background='transparent'; });
+function safeHex(c, fallback) {
+  return (typeof c === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(c)) ? c : fallback;
 }
- 
-// --- Machine a ecrire ---
-(function typewriter(){
-  const el = $('bio-text');
-  const lines = (CONFIG.bio && CONFIG.bio.length) ? CONFIG.bio : [''];
-  let li=0, ci=0, del=false;
-  (function tick(){
-    const full = lines[li] || '';
-    el.textContent = full.slice(0, ci);
-    if (!del && ci < full.length){ ci++; setTimeout(tick, 55); }
-    else if (!del && ci === full.length){ del = true; setTimeout(tick, 1600); }
-    else if (del && ci > 0){ ci--; setTimeout(tick, 28); }
-    else { del = false; li = (li+1) % lines.length; setTimeout(tick, 300); }
-  })();
-})();
- 
-// --- Tilt 3D ---
-const card = $('card');
-addEventListener('mousemove', e => {
-  const r = card.getBoundingClientRect();
-  const x = (e.clientX - r.left) / r.width - .5;
-  const y = (e.clientY - r.top) / r.height - .5;
-  card.style.transform = `rotateY(${x*9}deg) rotateX(${-y*9}deg)`;
+function safeUrl(u) {
+  if (typeof u !== 'string') return '';
+  u = u.trim();
+  if (!u) return '';
+  if (/^mailto:/i.test(u)) return u;
+  if (/^https?:\/\//i.test(u)) return u;
+  return 'https://' + u; // on prefixe par defaut
+}
+function requireAuth(req, res, next) {
+  if (!req.session.userId) return res.redirect('/login');
+  next();
+}
+function toArray(v) { return v == null ? [] : (Array.isArray(v) ? v : [v]); }
+
+// ===========================================================================
+//  ROUTES — PUBLIC
+// ===========================================================================
+app.get('/', (req, res) => {
+  const count = db.prepare('SELECT COUNT(*) c FROM users').get().c;
+  const recent = db.prepare(
+    'SELECT username, avatar, title FROM users ORDER BY created_at DESC LIMIT 12'
+  ).all();
+  res.render('index', { count, recent });
 });
-addEventListener('mouseleave', () => card.style.transform = '');
- 
-// --- Particules ---
-(function fx(){
-  if (CONFIG.effect === 'none' || !CONFIG.effect) return;
-  const cv = $('fx'), ctx = cv.getContext('2d');
-  let W, H, P = [];
-  function size(){ W = cv.width = innerWidth; H = cv.height = innerHeight; }
-  size(); addEventListener('resize', size);
-  const N = CONFIG.effect === 'stars' ? 120 : 90;
-  for (let i=0;i<N;i++) P.push({
-    x:Math.random()*W, y:Math.random()*H,
-    r: CONFIG.effect==='rain'?Math.random()*1+.5:Math.random()*2.2+.6,
-    s: CONFIG.effect==='rain'?Math.random()*6+5:Math.random()*1.2+.3,
-    d: Math.random()*.6-.3, a: Math.random()*.6+.3, tw: Math.random()*.05
+
+// ---- Inscription ----
+app.get('/register', (req, res) => {
+  if (req.session.userId) return res.redirect('/dashboard');
+  res.render('register', { error: null, username: '' });
+});
+app.post('/register', (req, res) => {
+  const username = (req.body.username || '').trim();
+  const password = req.body.password || '';
+  const render = (error) => res.status(400).render('register', { error, username });
+
+  if (!validUsername(username))
+    return render("Pseudo invalide (3 a 20 caracteres : lettres, chiffres, _).");
+  if (password.length < 6)
+    return render('Le mot de passe doit faire au moins 6 caracteres.');
+  const exists = db.prepare('SELECT 1 FROM users WHERE username_lower = ?').get(username.toLowerCase());
+  if (exists) return render('Ce pseudo est deja pris.');
+
+  const hash = bcrypt.hashSync(password, 10);
+  const info = db.prepare(
+    'INSERT INTO users (username, username_lower, password, created_at) VALUES (?,?,?,?)'
+  ).run(username, username.toLowerCase(), hash, Date.now());
+  req.session.userId = info.lastInsertRowid;
+  res.redirect('/dashboard');
+});
+
+// ---- Connexion ----
+app.get('/login', (req, res) => {
+  if (req.session.userId) return res.redirect('/dashboard');
+  res.render('login', { error: null, username: '' });
+});
+app.post('/login', (req, res) => {
+  const username = (req.body.username || '').trim();
+  const password = req.body.password || '';
+  const user = db.prepare('SELECT * FROM users WHERE username_lower = ?').get(username.toLowerCase());
+  if (!user || !bcrypt.compareSync(password, user.password)) {
+    return res.status(401).render('login', { error: 'Pseudo ou mot de passe incorrect.', username });
+  }
+  req.session.userId = user.id;
+  res.redirect('/dashboard');
+});
+
+app.post('/logout', (req, res) => {
+  req.session.destroy(() => res.redirect('/'));
+});
+
+// ===========================================================================
+//  ROUTES — DASHBOARD (edition du profil)
+// ===========================================================================
+app.get('/dashboard', requireAuth, (req, res) => {
+  const u = db.prepare('SELECT * FROM users WHERE id = ?').get(req.session.userId);
+  res.render('dashboard', {
+    u,
+    bio: JSON.parse(u.bio || '[]').join('\n'),
+    socials: JSON.parse(u.socials || '[]'),
+    buttons: JSON.parse(u.buttons || '[]'),
+    saved: req.query.saved === '1'
   });
-  (function draw(){
-    ctx.clearRect(0,0,W,H);
-    for (const p of P){
-      ctx.beginPath();
-      if (CONFIG.effect==='rain'){
-        ctx.strokeStyle=`rgba(180,200,255,${p.a})`; ctx.lineWidth=p.r;
-        ctx.moveTo(p.x,p.y); ctx.lineTo(p.x+p.d,p.y+p.s*2); ctx.stroke();
-        p.y+=p.s*2; p.x+=p.d;
-      } else if (CONFIG.effect==='stars'){
-        p.a+=p.tw; if(p.a>1||p.a<.2)p.tw*=-1;
-        ctx.fillStyle=`rgba(255,255,255,${p.a})`; ctx.arc(p.x,p.y,p.r,0,7); ctx.fill();
-        p.y+=p.s*.15;
-      } else {
-        ctx.fillStyle=`rgba(255,255,255,${p.a})`; ctx.arc(p.x,p.y,p.r,0,7); ctx.fill();
-        p.y+=p.s*.4; p.x+=Math.sin(p.y*.01)*.5+p.d;
-      }
-      if(p.y>H){p.y=-10;p.x=Math.random()*W}
-      if(p.x>W)p.x=0; if(p.x<0)p.x=W;
+});
+
+app.post('/dashboard', requireAuth, (req, res) => {
+  upload(req, res, (err) => {
+    if (err) {
+      return res.status(400).send('Erreur d\'upload : ' + err.message + ' (taille max 25 Mo, formats image/video/audio).');
     }
-    requestAnimationFrame(draw);
-  })();
-})();
- 
-// --- Lecteur audio ---
-const audio = $('audio');
-const ICON_PLAY = '<path d="M8 5v14l11-7z"/>', ICON_PAUSE = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
-const ppIcon = $('pp-icon');
-if (CONFIG.song){
-  audio.src = CONFIG.song;
-  $('song-name').textContent = CONFIG.songName || 'Musique';
-  audio.volume = 0.4;
-  const player = $('player'), pp = $('pp'), bar = $('bar'), prog = $('progress'), vol = $('vol');
-  if (CONFIG.songArt && player){
-    const art = document.createElement('img');
-    art.src = CONFIG.songArt; art.alt = '';
-    art.style.cssText = 'width:38px;height:38px;border-radius:8px;object-fit:cover;flex-shrink:0';
-    player.insertBefore(art, player.firstChild);
-  }
-  pp.addEventListener('click', () => {
-    if (audio.paused){ audio.play(); ppIcon.innerHTML = ICON_PAUSE; }
-    else { audio.pause(); ppIcon.innerHTML = ICON_PLAY; }
+    const u = db.prepare('SELECT * FROM users WHERE id = ?').get(req.session.userId);
+    const b = req.body;
+    const files = req.files || {};
+
+    // Champs texte
+    const title = (b.title || '').slice(0, 80);
+    const bioLines = JSON.stringify((b.bio || '').split('\n').map(s => s.trim()).filter(Boolean).slice(0, 6));
+    const songName = (b.song_name || '').slice(0, 80);
+    const accent = safeHex(b.accent, '#8b5cf6');
+    const accent2 = safeHex(b.accent2, '#22d3ee');
+    const effect = ['snow', 'rain', 'stars', 'none'].includes(b.effect) ? b.effect : 'none';
+    const status = ['online', 'idle', 'dnd', 'offline', ''].includes(b.status) ? b.status : '';
+    const cursor = b.cursor ? 1 : 0;
+
+    // Liens sociaux + boutons (champs repetes)
+    const sTypes = toArray(b.social_type), sUrls = toArray(b.social_url);
+    const socials = [];
+    for (let i = 0; i < sTypes.length; i++) {
+      const url = safeUrl(sUrls[i]);
+      if (url && sTypes[i]) socials.push({ type: String(sTypes[i]).slice(0, 20), url });
+    }
+    const bLabels = toArray(b.btn_label), bUrls = toArray(b.btn_url);
+    const buttons = [];
+    for (let i = 0; i < bLabels.length; i++) {
+      const url = safeUrl(bUrls[i]);
+      const label = String(bLabels[i] || '').trim().slice(0, 40);
+      if (url && label) buttons.push({ label, url });
+    }
+
+    // Fichiers (on remplace seulement si un nouveau est envoye)
+    let avatar = u.avatar, background = u.background, bgIsVideo = u.bg_is_video, song = u.song;
+    let songArt = u.song_art || '';
+    if (files.avatar)     avatar = '/uploads/' + files.avatar[0].filename;
+    if (files.background) {
+      background = '/uploads/' + files.background[0].filename;
+      bgIsVideo = files.background[0].mimetype.startsWith('video/') ? 1 : 0;
+    }
+    if (files.song) {
+      song = '/uploads/' + files.song[0].filename; // fichier uploade : pas de pochette
+      songArt = '';
+    } else if (b.song_url && /^https?:\/\//i.test(b.song_url)) {
+      song = b.song_url;                            // musique choisie via la recherche
+      songArt = (b.song_art && /^https?:\/\//i.test(b.song_art)) ? b.song_art : '';
+    }
+
+    db.prepare(`UPDATE users SET
+      title=?, bio=?, song_name=?, accent=?, accent2=?, effect=?, status=?, cursor=?,
+      socials=?, buttons=?, avatar=?, background=?, bg_is_video=?, song=?, song_art=?
+      WHERE id=?`).run(
+      title, bioLines, songName, accent, accent2, effect, status, cursor,
+      JSON.stringify(socials), JSON.stringify(buttons),
+      avatar, background, bgIsVideo, song, songArt, u.id
+    );
+
+    res.redirect('/dashboard?saved=1');
   });
-  audio.addEventListener('timeupdate', () => { if (audio.duration) bar.style.width = (audio.currentTime/audio.duration*100) + '%'; });
-  prog.addEventListener('click', e => { const r = prog.getBoundingClientRect(); audio.currentTime = (e.clientX-r.left)/r.width*audio.duration; });
-  vol.addEventListener('input', e => audio.volume = e.target.value);
-} else {
-  const player = $('player'); if (player) player.remove();
-}
- 
-// --- Ecran d'entree ---
-$('enter').addEventListener('click', () => {
-  $('enter').classList.add('hidden');
-  $('stage').classList.add('show');
-  if (CONFIG.song){
-    const player = $('player'); if (player) player.classList.add('show');
-    audio.play().then(() => { if (ppIcon) ppIcon.innerHTML = ICON_PAUSE; }).catch(() => {});
+});
+
+// ===========================================================================
+//  API — RECHERCHE DE MUSIQUE (proxy iTunes Search, gratuit, sans cle)
+//  Renvoie des apercus de ~30s. Doit etre AVANT la route /:username.
+// ===========================================================================
+app.get('/api/music/search', async (req, res) => {
+  const q = (req.query.q || '').toString().trim();
+  if (q.length < 2) return res.json([]);
+  try {
+    const url = 'https://itunes.apple.com/search?media=music&entity=song&limit=8&term=' + encodeURIComponent(q);
+    const r = await fetch(url);
+    const data = await r.json();
+    const results = (data.results || [])
+      .filter(t => t.previewUrl)
+      .map(t => ({
+        name: (t.trackName + ' - ' + t.artistName).slice(0, 80),
+        url:  t.previewUrl,
+        art:  (t.artworkUrl100 || '').replace('100x100', '300x300')
+      }));
+    res.json(results);
+  } catch (e) {
+    res.status(502).json([]);
   }
-  const v = $('bg-video'); if (v && v.style.display !== 'none') v.play().catch(() => {});
-}, { once:true });
+});
+
+// ===========================================================================
+//  ROUTE — PROFIL PUBLIC  (tonsite.com/pseudo)  -> doit rester EN DERNIER
+// ===========================================================================
+app.get('/:username', (req, res, next) => {
+  const name = req.params.username;
+  if (RESERVED.has(name.toLowerCase())) return next();
+  const u = db.prepare('SELECT * FROM users WHERE username_lower = ?').get(name.toLowerCase());
+  if (!u) return res.status(404).render('404');
+
+  db.prepare('UPDATE users SET views = views + 1 WHERE id = ?').run(u.id);
+
+  const cfg = {
+    username:   u.username,
+    title:      u.title,
+    bio:        JSON.parse(u.bio || '[]'),
+    avatar:     u.avatar,
+    background: u.background,
+    bgIsVideo:  !!u.bg_is_video,
+    song:       u.song,
+    songName:   u.song_name,
+    songArt:    u.song_art || '',
+    accent:     u.accent,
+    accent2:    u.accent2,
+    effect:     u.effect,
+    status:     u.status,
+    cursor:     !!u.cursor,
+    socials:    JSON.parse(u.socials || '[]'),
+    buttons:    JSON.parse(u.buttons || '[]'),
+    views:      u.views + 1
+  };
+  // Serialisation JSON sure (empeche la cassure de la balise </script>)
+  const cfgJson = JSON.stringify(cfg).replace(/</g, '\\u003c');
+  res.render('profile', { cfg, cfgJson });
+});
+
+app.use((req, res) => res.status(404).render('404'));
+
+app.listen(PORT, () => console.log(`✅ En ligne sur http://localhost:${PORT}`));
